@@ -4,7 +4,8 @@ namespace App\Http\Controllers;
 
 use App\User;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 class UsersController extends Controller
 {
     /**
@@ -14,8 +15,10 @@ class UsersController extends Controller
      */
     public function index()
     {
-        //
+        return response()->json(User::all(),200);
+        
     }
+   
 
     /**
      * Show the form for creating a new resource.
@@ -42,7 +45,15 @@ class UsersController extends Controller
             'email' => 'required',
             'password' => 'required'
         ]);
-        $user = User::create($request->all());
+        $user=new User;
+        $user->token = Str::random(32);
+        $user->name  = $request->input('name');
+        $user->password= $request->input('password');
+        $user->personal_mail = $request->input('personal_mail');
+        $user->email = $request->input('email');
+        $user->phone_num = $request->input('phone_num');
+        $user->save();
+       // $user = User::create($request->all(),);
         return response()->json([
             'message' => 'please check your email to activate your account',
             'user' => $user
@@ -58,7 +69,7 @@ class UsersController extends Controller
      */
     public function show($id)
     {
-        //
+        return response()->json(User::find($id),200);
     }
 
     /**
@@ -79,9 +90,11 @@ class UsersController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request,$id)
     {
-        //
+        $user = User::findOrFail($id);
+        $user->update($request->all());
+        return response()->json($user, 200);
     }
 
     /**
@@ -92,6 +105,8 @@ class UsersController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $user = User::findOrFail($id);
+        $user->delete();
+        return response()->json(null,204);
     }
 }

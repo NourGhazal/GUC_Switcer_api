@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\fifthyear;
+use Illuminate\Support\Arr;
+
 
 class FifthYearController extends Controller
 {
@@ -15,7 +17,7 @@ class FifthYearController extends Controller
      */
     public function index()
     {
-        //
+        return response()->json(fifthyear::all(),200);
     }
 
     /**
@@ -41,29 +43,64 @@ class FifthYearController extends Controller
             'from' => 'required',
             'to' => 'required',
             'extra_courses' => 'required',
-            'id' => 'required'
+            'user_id' => 'required'
         ]);
-        $match = DB::table('fifthyear')->where('to',$request->from)
-        -> where('from',$request->to)->where('major',$request->major) ->first();
-            if($match == null){
-        $fifthyear = fifthyear::create($request->all());
+        $to = $request->input('to');
+        $from = $request->input('from');
+        $extra_courses = $request->input('extra_courses');
+        $id = $request->input('user_id');
+        $major = $request->input('major');
+        $match = DB::table('fifthyear')->where('major',$major)->where('extra_courses',$extra_courses) ->get();
+         $match= $match-> where('to',$from)-> orwhere('from',$to)->get() ;
+         $switchuser=null;
+         foreach($match as $user){
+             if($user->from == $to && $user->to == $from){
+                $switchuser = [$user];
+             break;
+             }
+             if($user->to == $from){
+                 foreach($match as $user2){
+                if($user->from==$user2->to && $to==$user2->from){
+                    $switchuser=[$user,$user2];
+                   
+                break;
+                }
+                 }
+             }
+             if($switchuser!= null){
+             break;
+             }
+         }
+            if($switchuser == null){
+                $fifthyear = new fifthyear;
+                $fifthyear->user_id=$id;
+                $fifthyear->major=$major;
+                $fifthyear->from=$from;
+                $fifthyear->to=$to;
+                $fifthyear->extra_courses=$extra_courses;
+                $fifthyear->save();
         return response()->json([
             'message' => 'your switch was stored successfully',
             'switch' => $fifthyear
         ]);
     }
     else{
-        DB::table('fifthyear')->where('id',$match->id)->delete();
-        $user = DB::table('users')->where('id',$match->id);
-        $return =[
+        $found=[];
+        foreach($switchuser as $deleted){
+            $this->destroy($deleted->id);
+            $user = DB::table('users')->where('id',$deleted->id);
+              $return =[
             'email' => $user->personal_mail,
             'phone' => $user->phone_num,
             'name' => $user->name,
-
-        ];
+            'uni-mail'=>$user->mail
+             ];
+             $found = Arr::prepend($found, $return);
+        }
+        
         return response()->json([
             'message' => 'found a match',
-            'match' => $return
+            'match' => $found
         ]);
 
     }
@@ -76,7 +113,7 @@ class FifthYearController extends Controller
      */
     public function show($id)
     {
-        //
+        return response()->json(fifthyear::find($id),200);
     }
 
     /**
@@ -99,7 +136,9 @@ class FifthYearController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $fifthyear = fifthyear::findOrFail($id);
+        $fifthyear->update(request()->all);
+        return response()->json($fifthyear,201);
     }
 
     /**
@@ -110,6 +149,8 @@ class FifthYearController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $fifthyear = fifthyear::findOrFail($id);
+        $fifthyear->delete();
+        return response()->json(null,204);
     }
 }
