@@ -17,8 +17,14 @@ class FirstYearController extends Controller
      */
     public function index()
     {
-        return response()->json(firstyear::all(),200);
+        $columns=['from','to'];
+        $firstyear = DB::select('select * from firstyear');
+        return response()->json([
+            'message' => 'your switch was stored successfully',
+            'data' => $firstyear
+        ],200);
     }
+    
 
     /**
      * Show the form for creating a new resource.
@@ -45,14 +51,19 @@ class FirstYearController extends Controller
             'extra_courses' => 'required',
             'user_id' => 'required'
         ]);
+    
         $to = $request->input('to');
         $from = $request->input('from');
         $extra_courses = $request->input('extra_courses');
         $id = $request->input('user_id');
         $major = $request->input('major');
+   
         $match = DB::table('firstyear')->where('major',$major)->where('extra_courses',$extra_courses) ->get();
-         $match= $match-> where('to',$from)-> orwhere('from',$to)->get() ;
+        
+        // $match= $match-> where('to',$from)-> orwhere('from',$to)->get() ;
+        
          $switchuser=null;
+        
          foreach($match as $user){
              if($user->from == $to && $user->to == $from){
                 $switchuser = [$user];
@@ -71,6 +82,7 @@ class FirstYearController extends Controller
              break;
              }
          }
+         
             if($switchuser == null){
                 $firstyear = new firstyear;
                 $firstyear->user_id=$id;
@@ -78,6 +90,7 @@ class FirstYearController extends Controller
                 $firstyear->from=$from;
                 $firstyear->to=$to;
                 $firstyear->extra_courses=$extra_courses;
+                
                 $firstyear->save();
         return response()->json([
             'message' => 'your switch was stored successfully',
@@ -86,16 +99,19 @@ class FirstYearController extends Controller
     }
     else{
         $found=[];
+    
         foreach($switchuser as $deleted){
-            $this->destroy($deleted->id);
-            $user = DB::table('users')->where('id',$deleted->id);
-              $return =[
-            'email' => $user->personal_mail,
-            'phone' => $user->phone_num,
-            'name' => $user->name,
-            'uni-mail'=>$user->mail
-             ];
-             $found = Arr::prepend($found, $return);
+            $this->destroy($deleted->user_id);
+            $user = DB::table('users')->where('id',$deleted->user_id)->get();
+            // $return = $user->name;
+          
+              
+           
+            array_push($found, $user);
+             return response()->json([
+                'message' => 'found a match',
+                'match' => $found
+            ]);
         }
         
         return response()->json([
@@ -149,8 +165,8 @@ class FirstYearController extends Controller
      */
     public function destroy($id)
     {
-        $firstyear = firstyear::findOrFail($id);
-        $firstyear->delete();
+ 
+        firstyear::where('user_id',$id)->delete(); 
          return response()->json(null,204);
     
     }

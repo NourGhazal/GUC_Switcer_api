@@ -32,7 +32,7 @@ return [
     |            "postmark", "log", "array"
     |
     */
-    'from' => ['address' => 'noureldinghazal@gmail.com', 'name' => 'Nour'],
+    'from' => ['address' => 'noureldinghazal@gmail.com', 'name' => 'GUC_Switcer'],
     'mailers' => [
         'smtp' => [
             'transport' => 'smtp',
@@ -84,8 +84,8 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', 'Example'),
+        'address' => env('MAIL_FROM_ADDRESS', 'noureldinghazal@gmail.com'),
+        'name' => env('MAIL_FROM_NAME', 'GUC_Switcer'),
     ],
 
     /*
