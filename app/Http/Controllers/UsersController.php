@@ -17,7 +17,7 @@ class UsersController extends Controller
      */
     public function index()
     {
-        return response()->json(User::all(),200);
+        // return response()->json(User::all(),200);
         
     }
    
@@ -40,26 +40,26 @@ class UsersController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required',
-            'personal_mail' => 'required',
-            'phone_num' => 'required',
-            'email' => 'required',
-            'password' => 'required'
-        ]);
-        $user=new User;
-        $user->token = Str::random(32);
-        $user->name  = $request->input('name');
-        $user->password= $request->input('password');
-        $user->personal_mail = $request->input('personal_mail');
-        $user->email = $request->input('email');
-        $user->phone_num = $request->input('phone_num');
-        $user->save();
-       // $user = User::create($request->all(),);
-        return response()->json([
-            'message' => 'please check your email to activate your account',
-            'user' => $user
-        ]);
+    //     $request->validate([
+    //         'name' => 'required',
+    //         'personal_mail' => 'required',
+    //         'phone_num' => 'required',
+    //         'email' => 'required',
+    //         'password' => 'required'
+    //     ]);
+    //     $user=new User;
+    //     $user->token = Str::random(32);
+    //     $user->name  = $request->input('name');
+    //     $user->password= $request->input('password');
+    //     $user->personal_mail = $request->input('personal_mail');
+    //     $user->email = $request->input('email');
+    //     $user->phone_num = $request->input('phone_num');
+    //     $user->save();
+    //    // $user = User::create($request->all(),);
+    //     return response()->json([
+    //         'message' => 'please check your email to activate your account',
+    //         'user' => $user
+    //     ]);
    
     }
 
@@ -71,7 +71,9 @@ class UsersController extends Controller
      */
     public function show($id)
     {
-        return response()->json(User::find($id),200);
+        $user =User::find($id);
+        $user->token=null;
+        return response()->json($user,200);
     }
 
 
@@ -96,8 +98,7 @@ class UsersController extends Controller
      */
     public function update(Request $request,$id)
     {
-        $user = User::findOrFail($id);
-        $user->update($request->all());
+        $user = User::where('id',$id)->where('token',$request->token)->update($request->all());
         return response()->json($user, 200);
     }
 
@@ -107,10 +108,9 @@ class UsersController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Request $request,$id)
     {
-        $user = User::findOrFail($id);
-        $user->delete();
+        $user = User::where('id',$id)->where('token',$request->token)->delete();
         return response()->json(null,204);
     }
 }
