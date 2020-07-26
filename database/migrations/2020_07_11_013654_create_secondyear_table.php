@@ -16,6 +16,7 @@ class CreateSecondyearTable extends Migration
         Schema::create('secondyear', function (Blueprint $table) {
             $table->unsignedBigInteger('user_id');
             $table->foreign('user_id') ->references('id')->on('users')->onDelete('cascade');
+            $table->string('token');
             $table->integer('major');
             $table->integer('from');
             $table->integer('to');

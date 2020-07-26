@@ -52,7 +52,7 @@ Route::put('fifthyear/{id}', 'FifthYearController@update');
 Route::delete('fifthyear/{id}', 'FifthYearController@destroy');
 
 Route::post('register', 'Auth\\RegisterController@register');
-
+Route::post('login', 'Auth\LoginController@login');
 
 Route::middleware(['auth:api','headers'=> ['Accept' =>'application/json']])->get('/user', function (Request $request) {
     return $request->user();

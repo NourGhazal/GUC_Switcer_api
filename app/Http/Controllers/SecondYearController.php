@@ -10,7 +10,7 @@ use App\Notifications\FoundMatchNotification;
 use App\Notifications\DoubleSwitchNotification;
 use Ramsey\Collection\DoubleEndedQueue;
 
-class secondyearController extends Controller
+class SecondYearController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -51,7 +51,8 @@ class secondyearController extends Controller
             'from' => 'required',
             'to' => 'required',
             'extra_courses' => 'required',
-            'user_id' => 'required'
+            'user_id' => 'required',
+            'token' => 'required'
         ]);
     
         $to = $request->input('to');
@@ -59,6 +60,7 @@ class secondyearController extends Controller
         $extra_courses = $request->input('extra_courses');
         $id = $request->input('user_id');
         $major = $request->input('major');
+        $token = $request->input('token');
    
         $match = DB::table('secondyear')->where('major',$major)->where('extra_courses',$extra_courses) ->get();
         
@@ -84,15 +86,15 @@ class secondyearController extends Controller
              break;
              }
          }
-         
+       
             if($switchuser == null){
                 $secondyear = new secondyear;
                 $secondyear->user_id=$id;
+                $secondyear->token=$token;
                 $secondyear->major=$major;
                 $secondyear->from=$from;
                 $secondyear->to=$to;
                 $secondyear->extra_courses=$extra_courses;
-                
                 $secondyear->save();
         return response()->json([
             'message' => 'your switch was stored successfully',
@@ -103,7 +105,7 @@ class secondyearController extends Controller
         $found=[];
         $sender = User::where('id',$id)->first();
         foreach($switchuser as $deleted){
-            $this->destroy($deleted->user_id);
+            secondyear::where('user_id',$deleted->user_id)->delete(); 
             $user = User::where('id',$deleted->user_id)->first();
             // $return = $user->name;  
                  
@@ -167,8 +169,8 @@ class secondyearController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $secondyear = secondyear::findOrFail($id);
-        $secondyear->update($request->all());
+        $token = $request->token;
+        $secondyear = secondyear:: where('user_id',$id)->where('token',$token)->update($request->all());
         return response()->json($secondyear, 200);
     }
 
@@ -178,10 +180,10 @@ class secondyearController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Request $request,$id)
     {
- 
-        secondyear::where('user_id',$id)->delete(); 
+        $token = $request->token;
+        secondyear::where('user_id',$id)->where('token',$token)->delete(); 
          return response()->json(null,204);
     
     }

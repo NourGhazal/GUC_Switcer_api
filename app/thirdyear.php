@@ -8,6 +8,6 @@ class thirdyear extends Model
 {
     protected $table = 'thirdyear';
     protected $fillable = [
-        'major', 'from', 'to','extra_courses'
+        'major', 'from', 'to','extra_courses','token','user_id'
     ];
 }

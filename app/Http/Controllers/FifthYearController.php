@@ -51,7 +51,8 @@ class fifthyearController extends Controller
             'from' => 'required',
             'to' => 'required',
             'extra_courses' => 'required',
-            'user_id' => 'required'
+            'user_id' => 'required',
+            'token' => 'required'
         ]);
     
         $to = $request->input('to');
@@ -59,6 +60,7 @@ class fifthyearController extends Controller
         $extra_courses = $request->input('extra_courses');
         $id = $request->input('user_id');
         $major = $request->input('major');
+        $token = $request->input('token');
    
         $match = DB::table('fifthyear')->where('major',$major)->where('extra_courses',$extra_courses) ->get();
         
@@ -84,15 +86,15 @@ class fifthyearController extends Controller
              break;
              }
          }
-         
+       
             if($switchuser == null){
                 $fifthyear = new fifthyear;
                 $fifthyear->user_id=$id;
+                $fifthyear->token=$token;
                 $fifthyear->major=$major;
                 $fifthyear->from=$from;
                 $fifthyear->to=$to;
                 $fifthyear->extra_courses=$extra_courses;
-                
                 $fifthyear->save();
         return response()->json([
             'message' => 'your switch was stored successfully',
@@ -103,7 +105,7 @@ class fifthyearController extends Controller
         $found=[];
         $sender = User::where('id',$id)->first();
         foreach($switchuser as $deleted){
-            $this->destroy($deleted->user_id);
+            fifthyear::where('user_id',$deleted->user_id)->delete(); 
             $user = User::where('id',$deleted->user_id)->first();
             // $return = $user->name;  
                  
@@ -167,8 +169,8 @@ class fifthyearController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $fifthyear = fifthyear::findOrFail($id);
-        $fifthyear->update($request->all());
+        $token = $request->token;
+        $fifthyear = fifthyear:: where('user_id',$id)->where('token',$token)->update($request->all());
         return response()->json($fifthyear, 200);
     }
 
@@ -178,10 +180,10 @@ class fifthyearController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Request $request,$id)
     {
- 
-        fifthyear::where('user_id',$id)->delete(); 
+        $token = $request->token;
+        fifthyear::where('user_id',$id)->where('token',$token)->delete(); 
          return response()->json(null,204);
     
     }
