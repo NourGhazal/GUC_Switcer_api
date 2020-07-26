@@ -44,4 +44,8 @@ class User extends Authenticatable implements MustVerifyEmail
 
         return $this->token;
     }
+    public function routeNotificationForMail($notification)
+    {
+      return $this->personal_mail;
+    }
 }

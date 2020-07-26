@@ -42,17 +42,19 @@ class DoubleSwitchNotification extends Notification
      */
     public function toMail($notifiable)
     {   $match1 = $this-> match1;
-        $name = $match1->name;
+        $user1 = $match1->name;
         $personal_mail = $match1->personal_mail;
         $phone_num = $match1->phone_num;
         $match2= $this->match2;
         $user2 = $match2->name;
         $personal_mail2=$match2->personal_mail;
         $phone_num2=$match2->phone_num;
+        $email = $notifiable->email;
+        $name = $notifiable->name;
         return (new MailMessage)
                     ->line('We found you a double switch :)')
                     ->line('please contact')
-                    ->line("name: {$name}")
+                    ->line("name: {$user1}")
                     ->line("email: {$personal_mail}")
                     ->line("phone number: {$phone_num}")
                     ->line('And contact')
@@ -62,7 +64,8 @@ class DoubleSwitchNotification extends Notification
                     ->line('please note that you need to contact both to preform a double switch')
                     ->line('please note that your switchs were removed to avoid duplicated matches')
                     ->line('if you did not proceed with this switch please request a new switch')
-                    ->action('Home',$url="/home");
+                    ->action('Home',$url="/home")
+                    ->cc($email,$name);;
     }
 
     /**

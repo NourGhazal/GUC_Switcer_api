@@ -43,6 +43,7 @@ class FoundMatchNotification extends Notification
         $name = $match->name;
         $personal_mail = $match->personal_mail;
         $phone_num = $match->phone_num;
+        $email = $notifiable->email;
         return (new MailMessage)
                     ->line('We found you a switch :)')
                     ->line("his/her name: {$name}")
@@ -50,7 +51,8 @@ class FoundMatchNotification extends Notification
                     ->line("phone number: {$phone_num}")
                     ->line('please note that your switchs were removed to avoid duplicated matches')
                     ->line('if you did not proceed with this switch please request a new switch')
-                    ->action('Home',$url="/home");
+                    ->action('Home',$url="/home")
+                    ->cc($email,$name);
     }
 
     /**
