@@ -1,14 +1,15 @@
 <?php
 
 namespace App\Http\Controllers\Auth;
-
+use Illuminate\Auth\Events\Registered;
 use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
 use App\User;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-
+use Illuminate\Http\Request;
+use App\Notifications\SendRegisterEmailNotifcation;
 class RegisterController extends Controller
 {
     /*
@@ -52,7 +53,9 @@ class RegisterController extends Controller
         return Validator::make($data, [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'personal_mail'=>['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+            // 'phone_num'=>['required','string','11'],
         ]);
     }
 
@@ -69,7 +72,34 @@ class RegisterController extends Controller
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'personal_mail'=>$data['personal_mail'],
-            'phone_num'=>"01010"
+            'phone_num'=>$data['phone_num'],
         ]);
     }
+
+
+ public function register(Request $request)
+{       
+    
+    
+    $this->validator($request->all())->validate();
+  
+    $user = $this->create($request->all());
+    $return = $this->registered($request, $user);
+    $user->notify(new SendRegisterEmailNotifcation());
+    
+    
+    // $this->guard()->login($user);
+
+    return response()->json([
+        'message' => 'regesterd successfully',
+        'user' => $return
+    ]);
+}
+
+protected function registered(Request $request, $user)
+{
+    $user->generateToken();
+
+    return  $user->toArray();
+}
 }

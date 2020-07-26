@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\secondyear;
-use Illuminate\Support\Arr;
+use App\User;
+use App\Notifications\FoundMatchNotification;
+use App\Notifications\DoubleSwitchNotification;
+use Ramsey\Collection\DoubleEndedQueue;
 
-
-class SecondYearController extends Controller
+class secondyearController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -17,8 +19,14 @@ class SecondYearController extends Controller
      */
     public function index()
     {
-        return response()->json(secondyear::all(),200);
+        $columns=['from','to'];
+        $secondyear = DB::select('select * from secondyear');
+        return response()->json([
+            'message' => 'your switch was stored successfully',
+            'data' => $secondyear
+        ],200);
     }
+    
 
     /**
      * Show the form for creating a new resource.
@@ -45,14 +53,19 @@ class SecondYearController extends Controller
             'extra_courses' => 'required',
             'user_id' => 'required'
         ]);
+    
         $to = $request->input('to');
         $from = $request->input('from');
         $extra_courses = $request->input('extra_courses');
         $id = $request->input('user_id');
         $major = $request->input('major');
+   
         $match = DB::table('secondyear')->where('major',$major)->where('extra_courses',$extra_courses) ->get();
-         $match= $match-> where('to',$from)-> orwhere('from',$to)->get() ;
+        
+        // $match= $match-> where('to',$from)-> orwhere('from',$to)->get() ;
+        
          $switchuser=null;
+        
          foreach($match as $user){
              if($user->from == $to && $user->to == $from){
                 $switchuser = [$user];
@@ -71,6 +84,7 @@ class SecondYearController extends Controller
              break;
              }
          }
+         
             if($switchuser == null){
                 $secondyear = new secondyear;
                 $secondyear->user_id=$id;
@@ -78,6 +92,7 @@ class SecondYearController extends Controller
                 $secondyear->from=$from;
                 $secondyear->to=$to;
                 $secondyear->extra_courses=$extra_courses;
+                
                 $secondyear->save();
         return response()->json([
             'message' => 'your switch was stored successfully',
@@ -86,22 +101,38 @@ class SecondYearController extends Controller
     }
     else{
         $found=[];
+        $sender = User::where('id',$id)->first();
         foreach($switchuser as $deleted){
-            $this->destroy($deleted->id);
-            $user = DB::table('users')->where('id',$deleted->id);
-              $return =[
-            'email' => $user->personal_mail,
-            'phone' => $user->phone_num,
-            'name' => $user->name,
-            'uni-mail'=>$user->mail
-             ];
-             $found = Arr::prepend($found, $return);
+            $this->destroy($deleted->user_id);
+            $user = User::where('id',$deleted->user_id)->first();
+            // $return = $user->name;  
+                 
+            array_push($found, $user);
+           
         }
         
-        return response()->json([
-            'message' => 'found a match',
-            'match' => $found
-        ]);
+        if(count($found) == 1){
+          
+            $user->notify(new FoundMatchNotification($sender));
+            $sender->notify(new FoundMatchNotification($user)); 
+            return response()->json([
+                'message' => 'found a match',
+                'match' => $found
+            ]);
+        }
+        else{
+            $user1=$found[0];
+            $user2=$found[1];
+            $user1->notify(new DoubleSwitchNotification($sender,$user2));
+            $user2->notify(new DoubleSwitchNotification($sender,$user1));
+            $sender->notify(new DoubleSwitchNotification($user1,$user2)); 
+          return response()->json([
+                'message' => 'found a match',
+                'match' => $found
+            ]); 
+        }
+        
+       
 
     }
     }
@@ -138,7 +169,7 @@ class SecondYearController extends Controller
     {
         $secondyear = secondyear::findOrFail($id);
         $secondyear->update($request->all());
-        return response()->json($secondyear,201);
+        return response()->json($secondyear, 200);
     }
 
     /**
@@ -149,8 +180,9 @@ class SecondYearController extends Controller
      */
     public function destroy($id)
     {
-        $secondyear = secondyear::findOrFail($id);
-        $secondyear->delete();
-        return response()->json(null,204);
+ 
+        secondyear::where('user_id',$id)->delete(); 
+         return response()->json(null,204);
+    
     }
 }

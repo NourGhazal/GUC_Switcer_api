@@ -19,6 +19,8 @@ Route::post('users', 'UsersController@store');
 Route::put('users/{id}', 'UsersController@update');
 Route::delete('users/{id}', 'UsersController@destroy');
 
+Route::get('verify/{token}', 'Auth\VerificationController@verify');
+
 Route::get('firstyear', 'FirstYearController@index');
 Route::get('firstyear/{id}', 'FirstYearController@show');
 Route::post('firstyear', 'FirstYearController@store');
@@ -49,8 +51,9 @@ Route::post('fifthyear', 'FifthYearController@store');
 Route::put('fifthyear/{id}', 'FifthYearController@update');
 Route::delete('fifthyear/{id}', 'FifthYearController@destroy');
 
-    
+Route::post('register', 'Auth\\RegisterController@register');
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
+
+Route::middleware(['auth:api','headers'=> ['Accept' =>'application/json']])->get('/user', function (Request $request) {
     return $request->user();
 });

@@ -6,6 +6,8 @@ use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use SebastianBergmann\Environment\Console;
+
 class UsersController extends Controller
 {
     /**
@@ -72,6 +74,8 @@ class UsersController extends Controller
         return response()->json(User::find($id),200);
     }
 
+
+   
     /**
      * Show the form for editing the specified resource.
      *

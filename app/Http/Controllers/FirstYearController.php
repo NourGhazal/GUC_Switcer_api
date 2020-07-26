@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\firstyear;
-use Illuminate\Support\Arr;
-
+use App\User;
+use App\Notifications\FoundMatchNotification;
+use App\Notifications\DoubleSwitchNotification;
+use Ramsey\Collection\DoubleEndedQueue;
 
 class FirstYearController extends Controller
 {
@@ -99,25 +101,38 @@ class FirstYearController extends Controller
     }
     else{
         $found=[];
-    
+        $sender = User::where('id',$id)->first();
         foreach($switchuser as $deleted){
             $this->destroy($deleted->user_id);
-            $user = DB::table('users')->where('id',$deleted->user_id)->get();
-            // $return = $user->name;
-          
-              
-           
+            $user = User::where('id',$deleted->user_id)->first();
+            // $return = $user->name;  
+                 
             array_push($found, $user);
-             return response()->json([
+           
+        }
+        
+        if(count($found) == 1){
+          
+            $user->notify(new FoundMatchNotification($sender));
+            $sender->notify(new FoundMatchNotification($user)); 
+            return response()->json([
                 'message' => 'found a match',
                 'match' => $found
             ]);
         }
+        else{
+            $user1=$found[0];
+            $user2=$found[1];
+            $user1->notify(new DoubleSwitchNotification($sender,$user2));
+            $user2->notify(new DoubleSwitchNotification($sender,$user1));
+            $sender->notify(new DoubleSwitchNotification($user1,$user2)); 
+          return response()->json([
+                'message' => 'found a match',
+                'match' => $found
+            ]); 
+        }
         
-        return response()->json([
-            'message' => 'found a match',
-            'match' => $found
-        ]);
+       
 
     }
     }
